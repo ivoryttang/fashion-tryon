@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@fal-ai/serverless-client": "^0.14.2"
+  }
+}
