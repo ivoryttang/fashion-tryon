@@ -1,5 +1,7 @@
 import asyncio
 import fal_client
+import streamlit as st
+from PIL import Image
 
 # FAL Try-on API: https://fal.ai/models/fal-ai/cat-vton/api?platform=python
 async def submit():
@@ -25,4 +27,32 @@ async def submit():
 
 
 if __name__ == "__main__":
-    asyncio.run(submit())
+    # asyncio.run(submit())
+    st.set_page_config(layout="wide")
+    st.markdown("<h1 style='text-align: center;'>Fashion Try-on App</h1>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center;'>Upload an image of yourself to generate fashionable outfits and create a virtual fashion show!</h2>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        human_image = st.file_uploader("Upload Image of Yourself", type=["jpg", "jpeg", "png"])
+
+        if human_image:
+            st.success("Images uploaded successfully!")
+
+            # Display the uploaded images
+            st.image(Image.open(human_image), caption="Human Image")
+
+        
+            if st.button("Get Outfits"):
+                # Assuming the images are uploaded and can be accessed directly
+                human_image_url = "https://path/to/human/image.jpg"
+                garment_image_url = "https://path/to/garment/image.jpg"
+
+                # Call the submit function with the uploaded images
+                asyncio.run(submit(human_image_url, garment_image_url))
+
+                st.success("Try-on process completed. Check the console for the result.")
+
+    with col2:
+        if st.button("Generate Fashion Show"):
+            st.success("Show is generating")
