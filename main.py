@@ -6,11 +6,13 @@ import os
 from dotenv import load_dotenv
 
 import tempfile
-from openai import OpenAI
+from mistralai import Mistral
 
 load_dotenv()
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+api_key = os.environ["MISTRAL_API_KEY"]
+model = "mistral-large-latest"
+client = Mistral(api_key=api_key)
 
 # Flux generate outfits
 async def get_outfit(prompt: str):
@@ -52,10 +54,13 @@ def get_outfit_descriptions(count: int, human_image_url: str):
     # Generate outfit descriptions using the OpenAI chat completion endpoint
     outfit_descriptions = []
     for i in range(count):
-        response = client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[{"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Give me description of a high fashion outfit that the following person would wear in a fashion show: " + human_description}
+        response = client.chat.complete(
+            model = model,
+            messages = [
+                {
+                    "role": "user",
+                    "content": "Give me description of a high fashion outfit that the following person would wear in a fashion show: " + human_description,
+                },
             ]
         )
         outfit_description = response.choices[0].message.content
