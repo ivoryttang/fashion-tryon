@@ -9,6 +9,7 @@ Anyone can now be a fashion model and walk the runway! *The future of how we dre
 3. Select the outfits you like, then click "Start Show"
 4. This will generate a video of you in those outfits walking the runway (Note: this step is currently using [Luma Dream Machine](https://lumalabs.ai/dream-machine) (to extend scene) and [Viggle](https://viggle.ai/home) (to generate walk)'s platforms since there's no publicly available API yet. Input the AI-generated images into the text/image to video models to get a "walk the runway" video. This will be updated to directly generate in the app once API's are released.)
 5. Add AI-generated music from [Udio](https://www.udio.com/home) to go along with your walk if you wish!
+6. Run [Browserbase](https://www.browserbase.com/) web agent script to find a similar online and add it to your shopping cart for your review before you purchase.
 
 ## Setup
 
