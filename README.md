@@ -16,3 +16,8 @@ Anyone can now be a fashion model and walk the runway! *The future of how we dre
 Add your own API keys in .env file for Fal.ai and Mistral
 
 Run **streamlit run main.py**
+
+## Future Directions
+
+Integrate features directly onto platform for video portions where there is no API currently available <br>
+Improve web agent shopping feature - certain actions are blocked (Amazon uses sophisticated systems to detect non-human behavior). Integrating with other shopping sites without bot detection can increase scope and help find a more similar outfit. Doing a similarity search between images and not just captions will also result in better results, as will adding filters for price / brand / material / etc. 
