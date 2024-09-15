@@ -1,7 +1,11 @@
 const { chromium } = require('playwright');
 require('dotenv').config();
 
-async function amazonSearch({
+/**
+ * Searches for a similar outfit to virtual try on from Amazon.com
+ * @param {*} query search term on Amazon
+ */
+async function amazonSearch({ 
     query = "White silk pant suit for women"
 }) {
     const browser = await chromium.connectOverCDP(`wss://connect.browserbase.com?apiKey=${process.env.BROWSERBASE_API_KEY}`);

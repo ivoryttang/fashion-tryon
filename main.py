@@ -148,3 +148,5 @@ if __name__ == "__main__":
     with col2:
         if st.button("Generate Fashion Show"):
             st.success("Show is generating")
+            # Take the image from virtual try on, upload it to viggle and choose one of the motion templates from "fashion" category
+            # Once video API's are released this can be done directly from this app
