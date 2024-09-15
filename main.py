@@ -4,9 +4,9 @@ import streamlit as st
 from PIL import Image
 import os
 from dotenv import load_dotenv
-
 import tempfile
 from mistralai import Mistral
+from playwright.sync_api import sync_playwright, Playwright
 
 load_dotenv()
 
@@ -67,6 +67,10 @@ def get_outfit_descriptions(count: int, human_image_url: str):
         print(outfit_description)
         outfit_descriptions.append(outfit_description)
     return outfit_descriptions
+
+
+
+
 
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
