@@ -13,9 +13,11 @@ Anyone can now be a fashion model and walk the runway! *The future of how we dre
 
 ## Setup
 
-Add your own API keys in .env file for Fal.ai and Mistral
+Add your own API keys in .env file for Fal.ai, Mistral, and Browserbase
 
 Run **streamlit run main.py**
+
+amazonSearch.js contains the web agent script. Either run it in the browserbase playground to modify it for your own taste or run it locally.
 
 ## Future Directions
 
