@@ -68,9 +68,23 @@ def get_outfit_descriptions(count: int, human_image_url: str):
         outfit_descriptions.append(outfit_description)
     return outfit_descriptions
 
+# New image/text to video API from Luma
+def generate_show(image_url: str):
+    handler = fal_client.submit(
+        "fal-ai/luma-dream-machine",
+        arguments={
+            {
+                "prompt": "Low-angle shot of the person in the photo walking the runway surrounded by a captivated audience",
+                "image_url": {
+                    "path": image_url
+                },
+                "aspect_ratio": "16:9"
+            }
+        },
+    )
 
-
-
+    result = handler.get()
+    return result["video"]["url"]
 
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
@@ -113,40 +127,74 @@ if __name__ == "__main__":
             human_image_url_2 = temp_file_path_2
             new_human_url_2 = fal_client.upload_file(human_image_url_2)
             
-            if st.button("Get Outfits"):
-                #get all outfit descriptions
-                all_outfits = get_outfit_descriptions(5, new_human_url)
-                all_outfits_2 = get_outfit_descriptions(5, new_human_url_2)
-                print("second person", new_human_url_2)
+        lora = st.text_input("Input Lora #1:", placeholder="fal-flux-lora")
+        lora2 = st.text_input("Input Lora #2:", placeholder="fal-flux-lora")
+        if st.button("Get Outfits"):
+            #get all outfit descriptions
+            all_outfits = get_outfit_descriptions(5, new_human_url)
+            all_outfits_2 = get_outfit_descriptions(5, new_human_url_2)
+            print("second person", new_human_url_2)
 
-                # Use async functions to get and try outfits
-                async def generate_outfits(human_url: str, outfits: list):
-                    outfit_images = []
-                    for i in range(5):
-                        # Get outfit image using Flux
-                        outfit_image_url = await get_outfit(outfits[i])
-                        print("OUTFIT IMAGE URL", human_url, outfit_image_url['images'][0]['url'])
-                        # Call the try-on function with the uploaded images
-                        outfit = await try_on(human_url, outfit_image_url['images'][0]['url'])
+            # Use async functions to get and try outfits
+            async def generate_outfits(human_url: str, outfits: list):
+                outfit_images = []
+                for i in range(len(outfits)):
+                    # Get outfit image using Flux
+                    outfit_image_url = await get_outfit(outfits[i])
+                    print("OUTFIT IMAGE URL", human_url, outfit_image_url['images'][0]['url'])
+                    # Call the try-on function with the uploaded images
+                    outfit = await try_on(human_url, outfit_image_url['images'][0]['url'])
 
-                        # add outfit
-                        outfit_images.append(outfit['url'])
-                        print("tried on successfully")
+                    # add outfit
+                    outfit_images.append(outfit['url'])
+                    print("tried on successfully")
                 
+                # Display the generated outfit images in a grid
+                cols = st.columns(len(outfits))  
+                for i, img_url in enumerate(outfit_images):
+                    with cols[i]:  # Use the corresponding column for each image
+                        st.image(img_url, caption=f"Outfit #{i + 1}")
+                        print("Showing outfits here")
+            
+            async def try_on_with_lora(outfits: list, lora: str):
+                outfit_images = []
+                for i in range(len(outfits)):
+                    handler = fal_client.submit(
+                        "fal-ai/flux-lora",
+                        arguments={
+                            "prompt": outfits[i]
+                        },
+                        loras = [
+                            {
+                            "path": lora
+                            }
+                        ]
+                    )
+                    result = handler.get()
+
+                    # add outfit
+                    outfit_images.append(result['images'][0]['url'])
+                    print("tried on successfully")
+
                     # Display the generated outfit images in a grid
-                    cols = st.columns(5)  # Create 5 columns for the grid
+                    cols = st.columns(len(outfits))  # Create 5 columns for the grid
                     for i, img_url in enumerate(outfit_images):
                         with cols[i]:  # Use the corresponding column for each image
                             st.image(img_url, caption=f"Outfit #{i + 1}")
                             print("Showing outfits here")
-
+                
+            
+            if lora and lora2:
+                asyncio.run(try_on_with_lora(all_outfits, lora))
+                asyncio.run(try_on_with_lora(all_outfits_2, lora2))
+            else:
                 asyncio.run(generate_outfits(new_human_url, all_outfits))
                 asyncio.run(generate_outfits(new_human_url_2, all_outfits_2))
 
-                st.success("Try-on process completed. Check the console for the result.")
+            st.success("Try-on process completed. Check the console for the result.")
 
+        
     with col2:
         if st.button("Generate Fashion Show"):
             st.success("Show is generating")
-            # Take the image from virtual try on, upload it to viggle and choose one of the motion templates from "fashion" category
-            # Once video API's are released this can be done directly from this app
+            # use new Luma AI API to generate fashion show given image that is clicked on
