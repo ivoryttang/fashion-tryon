@@ -152,8 +152,8 @@ if __name__ == "__main__":
         # which outfit to use in fashion show
         if st.button("Get Outfits"):
             #get all outfit descriptions
-            all_outfits = get_outfit_descriptions(1, new_human_url)
-            all_outfits_2 = get_outfit_descriptions(1, new_human_url_2)
+            all_outfits = get_outfit_descriptions(5, new_human_url)
+            all_outfits_2 = get_outfit_descriptions(5, new_human_url_2)
 
             # Use async functions to get and try outfits
             # empty string = no lora

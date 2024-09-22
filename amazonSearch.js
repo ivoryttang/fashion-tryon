@@ -33,7 +33,7 @@ async function amazonSearch({
                 console.log('No signup popup appeared');
             }
         
-            await page.fill('input[name="field-keywords"]', 'white silk pant suit for women'); // Replace with your search term
+            await page.fill('input[name="field-keywords"]', query); 
             await page.press('input[name="field-keywords"]', 'Enter');
             // Search for the outfit
             // await page.fill('input#twotabsearchtextbox', "cute fall knitted dress");
@@ -86,7 +86,7 @@ async function amazonSearch({
 }
 
 // Run the function
-amazonSearch({ query: "Women's summer floral dress" }).then(url => {
+amazonSearch({ query: "Women's summer floral dress" }).then(url => { // replace with similar search term
     console.log("Final Cart Button URL:", url);
 }).catch(error => {
     console.error("Error in amazonSearch:", error);
