@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import tempfile
 from mistralai import Mistral
 from playwright.sync_api import sync_playwright, Playwright
+import requests
 
 load_dotenv()
 
@@ -69,21 +70,18 @@ def get_outfit_descriptions(count: int, human_image_url: str):
     return outfit_descriptions
 
 # New image/text to video API from Luma
-def generate_show(image_url: str):
+async def generate_show(image_url: str):
     handler = fal_client.submit(
         "fal-ai/luma-dream-machine",
         arguments={
-            {
-                "prompt": "Low-angle shot of the person in the photo walking the runway surrounded by a captivated audience",
-                "image_url": {
-                    "path": image_url
-                },
-                "aspect_ratio": "16:9"
-            }
+            "prompt": "Low-angle shot of the person in the photo walking the runway surrounded by a captivated audience",
+            "image_url": image_url,
+            "aspect_ratio": "16:9"
         },
     )
 
     result = handler.get()
+    print(result)
     return result["video"]["url"]
 
 if __name__ == "__main__":
@@ -129,11 +127,12 @@ if __name__ == "__main__":
             
         lora = st.text_input("Input Lora #1:", placeholder="fal-flux-lora")
         lora2 = st.text_input("Input Lora #2:", placeholder="fal-flux-lora")
+
+        # which outfit to use in fashion show
         if st.button("Get Outfits"):
             #get all outfit descriptions
-            all_outfits = get_outfit_descriptions(5, new_human_url)
-            all_outfits_2 = get_outfit_descriptions(5, new_human_url_2)
-            print("second person", new_human_url_2)
+            all_outfits = get_outfit_descriptions(1, new_human_url)
+            all_outfits_2 = get_outfit_descriptions(1, new_human_url_2)
 
             # Use async functions to get and try outfits
             async def generate_outfits(human_url: str, outfits: list):
@@ -153,8 +152,12 @@ if __name__ == "__main__":
                 cols = st.columns(len(outfits))  
                 for i, img_url in enumerate(outfit_images):
                     with cols[i]:  # Use the corresponding column for each image
-                        st.image(img_url, caption=f"Outfit #{i + 1}")
+                        if st.image(img_url, caption=f"Outfit #{i + 1}"):
+                            selected_image = img_url  # Set the selected index when the image is clicked
+                        if selected_image is not None:
+                            st.success(f"You selected Outfit #{i + 1}")
                         print("Showing outfits here")
+                return outfit_images, selected_image
             
             async def try_on_with_lora(outfits: list, lora: str):
                 outfit_images = []
@@ -162,13 +165,19 @@ if __name__ == "__main__":
                     handler = fal_client.submit(
                         "fal-ai/flux-lora",
                         arguments={
-                            "prompt": outfits[i]
-                        },
-                        loras = [
-                            {
-                            "path": lora
-                            }
-                        ]
+                            "prompt": outfits[i],
+                            "loras": [
+                                {
+                                "path": lora
+                                }
+                            ],
+                            "image_size": "landscape_4_3",
+                            "num_inference_steps": 28,
+                            "guidance_scale": 3.5,
+                            "num_images": 1,
+                            "enable_safety_checker": True,
+                            "output_format": "jpeg"
+                        }
                     )
                     result = handler.get()
 
@@ -177,24 +186,51 @@ if __name__ == "__main__":
                     print("tried on successfully")
 
                     # Display the generated outfit images in a grid
-                    cols = st.columns(len(outfits))  # Create 5 columns for the grid
+                    cols = st.columns(len(outfit_images))  
                     for i, img_url in enumerate(outfit_images):
                         with cols[i]:  # Use the corresponding column for each image
-                            st.image(img_url, caption=f"Outfit #{i + 1}")
-                            print("Showing outfits here")
+                            if st.image(img_url, caption=f"Outfit #{i + 1}"):
+                                selected_image = img_url  # Set the selected index when the image is clicked
+                    if selected_image is not None:
+                        st.success(f"You selected Outfit #{i + 1}")
+                    return outfit_images, selected_image
                 
             
             if lora and lora2:
-                asyncio.run(try_on_with_lora(all_outfits, lora))
-                asyncio.run(try_on_with_lora(all_outfits_2, lora2))
+                outfit, selected_image = asyncio.run(try_on_with_lora(all_outfits, lora))
+                outfit_2, selected_image_2 = asyncio.run(try_on_with_lora(all_outfits_2, lora2))
             else:
-                asyncio.run(generate_outfits(new_human_url, all_outfits))
-                asyncio.run(generate_outfits(new_human_url_2, all_outfits_2))
+                outfit, selected_image = asyncio.run(generate_outfits(new_human_url, all_outfits))
+                outfit_2, selected_image_2 = asyncio.run(generate_outfits(new_human_url_2, all_outfits_2))
 
             st.success("Try-on process completed. Check the console for the result.")
 
         
-    with col2:
-        if st.button("Generate Fashion Show"):
-            st.success("Show is generating")
-            # use new Luma AI API to generate fashion show given image that is clicked on
+            with col2:
+                if st.button("Generate Fashion Show"):
+                    print("Show is generating")
+                    # use new Luma AI API to generate fashion show given image that is clicked on
+                    video_placeholder_1 = st.empty()
+                    video_placeholder_2 = st.empty()
+
+                    # Display a loading message
+                    with st.spinner("Generating and loading videos..."):
+                        # Generate and display the first video
+                        video_url = asyncio.run(generate_show(selected_image))
+                        response = requests.get(video_url)
+                        if response.status_code == 200:
+                            video_bytes = response.content
+                            video_placeholder_1.video(video_bytes)
+                        else:
+                            video_placeholder_1.error("Failed to retrieve the first video.")
+
+                        # Generate and display the second video
+                        video_url_2 = asyncio.run(generate_show(selected_image_2))
+                        response_2 = requests.get(video_url_2)
+                        if response_2.status_code == 200:
+                            video_bytes_2 = response_2.content
+                            video_placeholder_2.video(video_bytes_2)
+                        else:
+                            video_placeholder_2.error("Failed to retrieve the second video.")
+
+                    st.text("Finished show")
