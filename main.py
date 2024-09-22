@@ -90,6 +90,21 @@ def get_outfit_descriptions(count: int, human_image_url: str):
         outfit_descriptions.append(outfit_description)
     return outfit_descriptions
 
+ # New image/text to video API from Luma
+def generate_show(image_url: str):
+    handler = fal_client.submit(
+        "fal-ai/luma-dream-machine/image-to-video",
+        arguments={
+            "prompt": "Full body shot of the person in the photo walking the runway surrounded by a captivated audience",
+            "image_url": image_url,
+            "aspect_ratio": "16:9"
+        },
+    )
+
+    result = handler.get()
+    print(result)
+    return result["video"]["url"]
+
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
     st.markdown("<h1 style='text-align: center;'>Fashion Try-on App</h1>", unsafe_allow_html=True)
@@ -173,45 +188,32 @@ if __name__ == "__main__":
             else:
                 outfit, selected_image = asyncio.run(generate_outfits(new_human_url, all_outfits, False))
                 outfit_2, selected_image_2 = asyncio.run(generate_outfits(new_human_url_2, all_outfits_2, False))
-
+            st.session_state['selected_image'] = selected_image
+            st.session_state['selected_image_2'] = selected_image_2
             st.success("Try-on process completed. Check the console for the result.")
-
         
-            with col2:
-                print(selected_image)
-                if st.button("Generate Fashion Show"):
-                    # New image/text to video API from Luma
-                    async def generate_show(image_url: str):
-                        handler = fal_client.submit(
-                            "fal-ai/luma-dream-machine",
-                            arguments={
-                                "prompt": "Full body shot of the person in the photo walking the runway surrounded by a captivated audience",
-                                "image_url": image_url,
-                                "aspect_ratio": "16:9"
-                            },
-                        )
+    with col2:
+        if st.button("Generate Fashion Show"):
+            # use new Luma AI API to generate fashion show given image that is clicked on
+            print("selected", st.session_state['selected_image'])
+            video_url = generate_show(st.session_state['selected_image'])
+            st.write(f"Video URL: {video_url}")
+            st.session_state['video_url'] = video_url
+            response = requests.get(st.session_state['video_url'])
+            if response.status_code == 200:
+                video_bytes = response.content
+                st.session_state["video_bytes"] = video_bytes
+                st.video(st.session_state["video_bytes"])
+            else:
+                st.error("Failed to retrieve video.")
 
-                        result = handler.get()
-                        print(result)
-                        return result["video"]["url"]
-                    # use new Luma AI API to generate fashion show given image that is clicked on
-                    try:
-                        video_url = asyncio.run(generate_show(selected_image))
-                        st.write(f"Video URL: {video_url}")
-
-                        response = requests.get(video_url)
-                        if response.status_code == 200:
-                            video_bytes = response.content
-                            st.video(video_bytes)
-                        else:
-                            st.error("Failed to retrieve video.")
-                    except Exception as e:
-                        st.error(f"Error generating video: {e}")
-                    # video_url_2 = asyncio.run(generate_show(selected_image_2))
-                    # response_2 = requests.get(video_url_2)
-                    # if response_2.status_code == 200:
-                    #     video_bytes = response.content
-                    #     st.video(video_bytes)
-                    # else:
-                    #     st.error("Failed to retrieve video.")
-                    st.text("Finished show")
+            video_url_2 = asyncio.run(generate_show(st.session_state['selected_image_2']))
+            st.session_state['video_url_2'] = video_url_2
+            response_2 = requests.get(st.session_state['video_url_2'])
+            if response_2.status_code == 200:
+                video_bytes_2 = response.content
+                st.session_state["video_bytes_2"] = video_bytes_2
+                st.video(st.session_state["video_bytes_2"])
+            else:
+                st.error("Failed to retrieve video.")
+            st.text("Finished show")
